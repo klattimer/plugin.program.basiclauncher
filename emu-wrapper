@@ -1,0 +1,29 @@
+#!/bin/bash
+export DISPLAY=:0.0
+export PATH=/usr/games:/usr/local/bin:$PATH
+
+# Wake up remote PC via mac address in settings (obtainable in python).
+ratpoison &
+RPID=$!
+
+EX=`basename $0`
+ARGS=""
+for var in "$@"
+do
+    pattern=" |'"
+    if [[ $var =~ $pattern ]]
+    then
+        ARGS="$ARGS \"$var\""
+    else
+        ARGS="$ARGS $var"
+    fi
+done
+KPID=`pidof kodi.bin`
+kill -SIGSTOP $KPID
+EXE=`which $EX`
+echo "Executing $EXE $ARGS"
+/usr/bin/xdotool mousemove 1920 1080
+eval $EXE $ARGS
+/usr/bin/xdotool mousemove 1920 1080
+kill -SIGCONT $KPID
+kill -9 $RPID
