@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.program.basiclauncher" name="Basic Launcher" version="0.0.1" provider-name="klattimer">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="default.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en">A simple game launcher</summary>
+        <license>GNU General Public License, v2</license>
+        <description lang="en">Launch game files.</description>
+        <platform>all</platform>
+        <assets>
+            <icon>resources/icon.png</icon>
+            <fanart></fanart>
+            <banner></banner> <!-- optional -->
+            <clearlogo></clearlogo> <!-- optional  -->
+            <screenshot></screenshot> <!-- optional, max 10  -->
+        </assets>
+    </extension>
+</addon>
