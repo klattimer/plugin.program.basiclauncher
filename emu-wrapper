@@ -1,8 +1,10 @@
 #!/bin/bash
+device='/dev/input/by-id/usb-4037_2.4G_Composite_Devic-event-if01'
+event_exit='*code 158 (KEY_BACK), value 0*'
 export DISPLAY=:0.0
 export PATH=/usr/games:/usr/local/bin:$PATH
+export SDL_AUDIODRIVER="alsa"
 
-# Wake up remote PC via mac address in settings (obtainable in python).
 ratpoison &
 RPID=$!
 
@@ -23,7 +25,17 @@ kill -SIGSTOP $KPID
 EXE=`which $EX`
 echo "Executing $EXE $ARGS"
 /usr/bin/xdotool mousemove 1920 1080
-eval $EXE $ARGS
+eval $EXE $ARGS &
 /usr/bin/xdotool mousemove 1920 1080
+EPID=`pidof $EXE`
+
+/usr/bin/evtest "$device" | while read line; do
+  case $line in
+    ($event_exit) break ;;
+  esac
+done
+
+echo "Exiting $EXE"
+kill -9 $EPID
 kill -SIGCONT $KPID
 kill -9 $RPID

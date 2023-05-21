@@ -12,7 +12,7 @@
         <description lang="en">Launch game files.</description>
         <platform>all</platform>
         <assets>
-            <icon>resources/icon.png</icon>
+            <icon>icon.png</icon>
             <fanart></fanart>
             <banner></banner> <!-- optional -->
             <clearlogo></clearlogo> <!-- optional  -->

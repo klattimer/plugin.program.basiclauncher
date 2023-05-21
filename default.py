@@ -89,7 +89,7 @@ def build_menu(args):
             menu_items.append(item)
     elif args.get('url', None) is not None:
         xbmc.log("Path %s" % str(args.get('url')), level=xbmc.LOGERROR)
-        items = tree 
+        items = tree
         path = args.get('url').split('/')
         for p in path:
             items = items[p]
@@ -113,9 +113,9 @@ def build_menu(args):
                 menu_items.append(make_game_item(item))
 
     xbmcplugin.addDirectoryItems(addon_handle, menu_items, len(menu_items))
-    xbmcplugin.setContent(addon_handle, 'videos')
+    xbmcplugin.setContent(addon_handle, 'movies')
     xbmcplugin.endOfDirectory(addon_handle)
-            
+
 
 def play_game(game_id):
     xbmc.log("Starting item: %s" % str(game_id), level=xbmc.LOGERROR)
@@ -134,7 +134,7 @@ def main():
 
     if mode is not None and mode == 'stream':
         play_game(args['url'])
-        return 
+        return
 
     build_menu(args)
 
