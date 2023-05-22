@@ -16,8 +16,9 @@ countries = {
 }
 
 aspect_ratios = {
-    str(round(16.0 / 9.0) * 10): "fanart",
-    str(round(100 / 142) * 10): "poster",
+    str(round(16.0 / 9.0 * 10)): "fanart",
+    str(round(500.0 / 710.0 * 10)): "poster",
+    str(round(500.0 / 700.0 * 10)): "poster",
     "10": "thumbnail"
 }
 
