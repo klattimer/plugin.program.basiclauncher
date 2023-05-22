@@ -259,6 +259,7 @@ def find_games(path):
     files = (p.resolve() for p in Path(path).glob("**/*") if p.suffix.lower() in {'.'+e for e in extensions_platforms.keys()})
 
     for f in files:
+        f = str(f)
         if f in found_files:
             continue
         print("Creating entry for: " + f)
