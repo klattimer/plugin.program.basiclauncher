@@ -81,11 +81,17 @@ class TheGamesDB:
         with open(studios) as f:
             self.studios = json.loads(f.read())
 
+        self.platform_name_lookup = {
+            v['alias']: k
+            for k, v in self.platforms['data']['platforms']
+        }
+
+
     def bootstrap_genres(self):
         localpath = os.path.dirname(os.path.abspath(__file__))
         localpath = os.path.join(localpath, 'TheGamesDB/static/v1/Genres/index.json')
         if not os.path.exists(localpath):
-            print ("Getting genre bootstrap")
+            print("Getting genre bootstrap")
             os.makedirs(os.path.dirname(localpath), exist_ok=True)
             data = self.downloader.add_item(
                 "Genres",
@@ -101,7 +107,7 @@ class TheGamesDB:
         localpath = os.path.dirname(os.path.abspath(__file__))
         localpath = os.path.join(localpath, 'TheGamesDB/static/v1/Platforms/index.json')
         if not os.path.exists(localpath):
-            print ("Getting platforms bootstrap")
+            print("Getting platforms bootstrap")
             os.makedirs(os.path.dirname(localpath), exist_ok=True)
             data = self.downloader.add_item(
                 "Platforms",
@@ -126,7 +132,7 @@ class TheGamesDB:
         localpath = os.path.dirname(os.path.abspath(__file__))
         localpath = os.path.join(localpath, 'TheGamesDB/static/v1/Developers/index.json')
         if not os.path.exists(localpath):
-            print ("Getting studios bootstrap")
+            print("Getting studios bootstrap")
             os.makedirs(os.path.dirname(localpath), exist_ok=True)
             data = self.downloader.add_item(
                 "Developers",
