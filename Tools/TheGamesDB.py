@@ -49,6 +49,7 @@ platform_hint_re = '('+platform_hint_re+')'
 
 class TheGamesDB:
     def __init__(self, apikey, region=1, country=0):
+        self.__base_url = "https://api.thegamesdb.net/v1/"
         self.region = region
         self.country = country
         self.downloader = Downloader("https://api.thegamesdb.net/v1/", 3000)
@@ -220,7 +221,8 @@ class TheGamesDB:
         # Return's prepared game object's for display
         name = self.clean_name(query_string)
         years, platforms = self.hints(query_string)
-        path = "/v1/Games/ByGameName"
+        print("Searching for %s" % name)
+        path = "/Games/ByGameName"
         params = copy(self.params)
         params = {
             "name": name,
