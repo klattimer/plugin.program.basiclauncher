@@ -210,16 +210,20 @@ class TheGamesDB:
     def clean_name(self, name_string):
         n = re.sub(r'\([^)]*\)', '', name_string)
         n = re.sub(r'-', ' ', n)
-        n = re.sub(r'.', ' ', n)
+        n = re.sub(r'\.', ' ', n)
         n = re.sub(r'\[[^)]*\]', '', n)
         n = re.sub(r'[^A-Za-z0-9 ]+', '', n)
         return n
 
     def search(self, query_string, platform_id=None):
         if len(query_string) == 0:
+            print("Error search is empty")
             return None
         # Return's prepared game object's for display
         name = self.clean_name(query_string)
+        if len(name) == 0:
+            print("Error search is empty")
+            return None
         years, platforms = self.hints(query_string)
         print("Searching for %s" % name)
         path = "/Games/ByGameName"
