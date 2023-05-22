@@ -83,7 +83,7 @@ class TheGamesDB:
 
         self.platform_name_lookup = {
             v['alias']: k
-            for k, v in self.platforms['data']['platforms']
+            for k, v in self.platforms['data']['platforms'].items()
         }
 
 
