@@ -217,7 +217,7 @@ def guess_platform(filename):
             hinted.append(p)
 
     if len(hinted) == 1:
-        return hinted
+        return hinted[0]
     if len(guesses) == 1:
         return guesses[0]
 
