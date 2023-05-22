@@ -261,11 +261,19 @@ def find_games(path):
     for f in files:
         if f in found_files:
             continue
+        print("Creating entry for: " + f)
         game = create_game_entry(f)
         if game is not None:
             games.append(game)
+        else:
+            print("Failed")
 
     # TODO: Scan moonlight if available
+    # TODO: Scan scummvm if available
+
+    games.sort(key=lambda x: x['title'])
+    with open("~/.kodi/addons/plugin.program.basiclauncher/games.json", 'wt') as f:
+        f.write(json.dumps(games, indent=4))
 
 
 if __name__ == '__main__':
