@@ -226,7 +226,7 @@ class TheGamesDB:
             return None
         years, platforms = self.hints(query_string)
         print("Searching for %s" % name)
-        path = "/Games/ByGameName"
+        path = "Games/ByGameName"
         params = copy(self.params)
         params = {
             "name": name,
