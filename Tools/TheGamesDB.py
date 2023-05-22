@@ -240,7 +240,7 @@ class TheGamesDB:
             })
         r = requests.get(self.__base_url + path, params=params)
         data = r.json()
-        self.downloader.limit_expires = time.time() + data['allowance_refresh_timer']
+        # self.downloader.limit_expires = time.time() + data['allowance_refresh_timer']
         self.downloader.limit_size = data['remaining_monthly_allowance']
 
         scores = Counter()
