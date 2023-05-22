@@ -4,6 +4,8 @@ import time
 from copy import copy
 from .Downloader import Downloader
 import os
+import re
+from collections import Counter
 
 regions = {
 
@@ -13,9 +15,41 @@ countries = {
 
 }
 
+aspect_ratios = {
+    str(round(16.0 / 9.0) * 10): "fanart",
+    str(round(100 / 142) * 10): "poster",
+    "10": "thumbnail"
+}
+
+platform_hints = [
+    'ps1',
+    'ps2',
+    'wii',
+    'gamecube',
+    'xbox',
+    'gamecube',
+    'psp',
+    'sega32x',
+    'snes',
+    'nes',
+    'gameboy',
+    'gameboycolor',
+    '3ds',
+    'gamegear',
+    'gameboyadvance',
+    'n64',
+    'ds',
+    'mastersystem',
+    'megadrive'
+]
+
+platform_hint_re = '|'.join(platform_hints)
+platform_hint_re = '('+platform_hint_re+')'
 
 class TheGamesDB:
     def __init__(self, apikey, region=1, country=0):
+        self.region = region
+        self.country = country
         self.downloader = Downloader("https://api.thegamesdb.net/v1/", 3000)
         self.downloader.start()
         self.cdndownloader = Downloader("https://cdn.thegamesdb.net/")
@@ -105,11 +139,9 @@ class TheGamesDB:
 
 
     def collect_images(self, data, userdata):
-        print (json.dumps(data, indent=4, sort_keys=True))
         path = data['data']['base_url']['original'][len(self.cdndownloader.base_url):]
         for k in data['data']['images'].keys():
             for image in data['data']['images'][k]:
-                print (path + image['filename'])
                 self.cdndownloader.add_item(
                     path + image['filename'],
                     callback=self.collect_image,
@@ -159,18 +191,32 @@ class TheGamesDB:
     def get_genre_names(self, genres):
         return [self.genres['data']['genres'][str(x)]['name'] for x in genres]
 
+    def hints(self, name_string):
+        years = re.findall(r'\d{4}', name_string)
+        years = [int(y) for y in years if int(y) > 1960]
+        platforms = re.findall(platform_hint_re, name_string.lower())
+        # TODO: Region hints from PAL/NTSC
+        #
+        return years, platforms
+
     def clean_name(self, name_string):
-        # Strip anything between brackets
-        # strip punctuation
-        
-        return name_string
+        n = re.sub(r'\([^)]*\)', '', name_string)
+        n = re.sub(r'-', ' ', n)
+        n = re.sub(r'.', ' ', n)
+        n = re.sub(r'\[[^)]*\]', '', n)
+        n = re.sub(r'[^A-Za-z0-9 ]+', '', n)
+        return n
 
     def search(self, query_string, platform_id=None):
+        if len(query_string) == 0:
+            return None
         # Return's prepared game object's for display
+        name = self.clean_name(query_string)
+        years, platforms = self.hints(query_string)
         path = "/v1/Games/ByGameName"
         params = copy(self.params)
         params = {
-            "name": self.clean_name(query_string),
+            "name": name,
             "fields": "players,publishers,genres,overview,last_updated,rating,platform"
         }
 
@@ -184,9 +230,81 @@ class TheGamesDB:
         self.downloader.limit_expires = time.time() + data['allowance_refresh_timer']
         self.downloader.limit_size = data['remaining_monthly_allowance']
 
-        return data['data']
+        scores = Counter()
+        index = {}
+        words = set(name.split(' '))
+        for game in data['data']['games']:
+            index[str(game['id'])] = game
+            score = 0
+            t = game['game_title'].lower()
+            c = self.clean_name(t)
+            w = set(c.split(' '))
 
+            if name == t:
+                score += 1
+            if name == w:
+                score += 1
+            if len(w.difference(words)) == 0:
+                # All words that are in t, exist in the name
+                score += 1
+            if len(words.difference(w)) > 1:
+                # More than one word difference between name and t
+                score -= 1
 
+            if len(name) > len(t):
+                # If our title name is longer, it might be a sequel
+                # penalise this name
+                score -= 1
+
+            if int(game['country_id']) == int(self.country):
+                score += 1
+
+            if int(game['region_id']) == int(self.region):
+                score += 1
+
+            for y in years:
+                if game['release_date'].startswith(str(y)):
+                    score += 1
+
+            scores[str(game['id'])] = score
+
+        game = scores.most_common()
+        game['images'] = {}
+
+        os.makedirs("cache", exist_ok=True)
+        path = data['include']['boxart']['base_url']['original'][len(self.cdndownloader.base_url):]
+        for image in data['include']['data'][str(game['id'])]:
+            if image['side'] != 'front':
+                continue
+
+            localpath = os.path.dirname(os.path.abspath(__file__))
+            local_image_file = "cache/game-%s-%s-%s.jpg" % (
+                image['type'],
+                str(game['id']),
+                str(image['id'])
+            )
+            local_image_file = os.path.join(localpath, local_image_file)
+            if os.path.exists(local_image_file):
+                continue
+
+            aspect = eval(image['resolution'].replace('x', ' / '))
+            aspect = round(aspect * 10)
+            if str(aspect) in aspect_ratios.keys():
+                game['images'][aspect_ratios[str(aspect)]] = local_image_file
+            else:
+                continue
+            self.cdndownloader.add_item(
+                path + image['filename'],
+                callback=self.collect_box_art,
+                userdata={
+                    "filename": local_image_file
+                })
+
+        return game
+
+    def collect_box_art(self, data, userdata):
+        with open(userdata['filename'], 'wb') as f:
+            f.write(data)
 
 if __name__ == '__main__':
     tgdb = TheGamesDB("968355110a135284d076b25991a49d1ea3c5797b54bbb5374a3ab0508fe05194")

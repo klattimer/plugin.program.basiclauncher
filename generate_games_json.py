@@ -193,7 +193,7 @@ platform_match = {
     "xavix-port": "xavix-port"
 }
 
-all_platforms = [e for nested in extensions_platforms for e in nested]
+all_platforms = [e for nested in extensions_platforms.values() for e in nested]
 
 
 def guess_platform(filename):
@@ -235,7 +235,7 @@ def create_game_entry(filename):
 
     platform_id = tgdb.get_platform_id(platform_match.get(platform))
     platform_name = tgdb.get_platform_name(platform_id)
-    result = tgdb.search(name, platform_id)
+    result = tgdb.search(name.lower(), platform_id)
     cmd = platform_launch_commands[platform]
 
     game = {
