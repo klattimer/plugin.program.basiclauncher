@@ -197,6 +197,9 @@ class TheGamesDB:
         return None
 
     def get_genre_names(self, genres):
+        if genres is None:
+            return []
+
         return [self.genres['data']['genres'][str(x)]['name'] for x in genres]
 
     def hints(self, name_string):
@@ -207,12 +210,17 @@ class TheGamesDB:
         #
         return years, platforms
 
+    def strip_hints(self, name_string, hints):
+        for h in hints:
+            name_string = name_string.replace(' ' + h + ' ', ' ')
+        return name_string
+
     def clean_name(self, name_string):
         n = re.sub(r'\([^)]*\)', '', name_string)
-        n = re.sub(r'-', ' ', n)
-        n = re.sub(r'\.', ' ', n)
+        n = re.sub(r'[-_\.]', ' ', n)
         n = re.sub(r'\[[^)]*\]', '', n)
         n = re.sub(r'[^A-Za-z0-9 ]+', '', n)
+        n = ' '.join([x for x in n.split(' ') if len(x) > 0])
         return n
 
     def search(self, query_string, platform_id=None):
@@ -225,23 +233,29 @@ class TheGamesDB:
             print("Error search is empty")
             return None
         years, platforms = self.hints(query_string)
+        name = self.strip_hints(name, platforms)
         print("Searching for %s" % name)
         path = "Games/ByGameName"
         params = copy(self.params)
-        params = {
+        params.update({
             "name": name,
             "fields": "players,publishers,genres,overview,last_updated,rating,platform"
-        }
+        })
 
         if platform_id is not None:
             params.update({
-                "include": "platform",
+                "include": "boxart,platform",
                 "filter[platform]": platform_id
             })
         r = requests.get(self.__base_url + path, params=params)
         data = r.json()
-        # self.downloader.limit_expires = time.time() + data['allowance_refresh_timer']
+        
+        # print (json.dumps(data, indent=4, sort_keys=True))
+        self.downloader.limit_expires = time.time() + data['allowance_refresh_timer']
         self.downloader.limit_size = data['remaining_monthly_allowance']
+        if data['data']['count'] == 0:
+            print ("No results")
+            return None 
 
         scores = Counter()
         index = {}
@@ -281,12 +295,15 @@ class TheGamesDB:
 
             scores[str(game['id'])] = score
 
-        game = scores.most_common()
+        game = index[scores.most_common()[0][0]]
         game['images'] = {}
-
+        
         os.makedirs("cache", exist_ok=True)
+        if 'boxart' not in data['include'].keys():
+            return game
+
         path = data['include']['boxart']['base_url']['original'][len(self.cdndownloader.base_url):]
-        for image in data['include']['data'][str(game['id'])]:
+        for image in data['include']['boxart']['data'][str(game['id'])]:
             if image['side'] != 'front':
                 continue
 
@@ -297,14 +314,16 @@ class TheGamesDB:
                 str(image['id'])
             )
             local_image_file = os.path.join(localpath, local_image_file)
-            if os.path.exists(local_image_file):
+            if image['resolution'] is None:
                 continue
-
             aspect = eval(image['resolution'].replace('x', ' / '))
             aspect = round(aspect * 10)
             if str(aspect) in aspect_ratios.keys():
                 game['images'][aspect_ratios[str(aspect)]] = local_image_file
             else:
+                continue
+            
+            if os.path.exists(local_image_file):
                 continue
             self.cdndownloader.add_item(
                 path + image['filename'],

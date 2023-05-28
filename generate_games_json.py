@@ -9,7 +9,7 @@ tgdb_api_key = "968355110a135284d076b25991a49d1ea3c5797b54bbb5374a3ab0508fe05194
 tgdb = TheGamesDB(tgdb_api_key)
 
 try:
-    with open("~/.kodi/addons/plugin.program.basiclauncher/games.json") as f:
+    with open(os.path.expanduser("~/.kodi/addons/plugin.program.basiclauncher/games.json")) as f:
         games = json.loads(f.read())
 except:
     games = []
@@ -40,7 +40,10 @@ platform_launch_commands = {
     "ps2": "~/bin/PCSX2 --fullscreen --nogui",
     "wii": "~/bin/dolphin-emu-nogui",
     "psp": "~/bin/PPSSPPSDL --fullscreen",
-    "gamecube": "~/bin/dolphin-emu-nogui"
+    "gamecube": "~/bin/dolphin-emu-nogui",
+    "gameboyadvance": "~/bin/vba -4 -F --filter-super-2xsai",
+    "gameboycolor": "~/bin/vba -4 -F --filter-super-2xsai",
+    "gameboy": "~/bin/vba -4 -F --filter-super-2xsai"
 }
 
 platform_match = {
@@ -237,14 +240,28 @@ def create_game_entry(filename):
     platform_name = tgdb.get_platform_name(platform_id)
     result = tgdb.search(name.lower(), platform_id)
     cmd = platform_launch_commands[platform]
-
-    game = {
+    if result is None:
+        return {
+            "id": str(uuid.uuid3(uuid.NAMESPACE_DNS, name)),
+            "title": name,
+            "description": "",
+            "icon": None,
+            "fanart": None,
+            "poster": None,
+            "platform": platform_name,
+            "genres": [],
+            "rating": "",
+            "release_date": "",
+            "file": filename,
+            "launch_command": cmd + " \"{file}\"",
+        }
+    return {
         "id": result['id'],
         "title": result['game_title'],
         "description": result['overview'],
-        "icon": os.path.join(dir, "Thumbnails/", name+".jpg"),
-        "fanart": os.path.join(dir, "Fanart/", name+".jpg"),
-        "poster": os.path.join(dir, "Thumbnails/", name+".jpg"),
+        "icon": result['images'].get('poster'),
+        "fanart": result['images'].get('fanart'),
+        "poster": result['images'].get('thumbnail'),
         "platform": platform_name,
         "genres": tgdb.get_genre_names(result['genres']),
         "rating": result['rating'],
@@ -252,7 +269,6 @@ def create_game_entry(filename):
         "file": filename,
         "launch_command": cmd + " \"{file}\""
     }
-    return game
 
 
 def find_games(path):
@@ -273,7 +289,7 @@ def find_games(path):
     # TODO: Scan scummvm if available
 
     games.sort(key=lambda x: x['title'])
-    with open("~/.kodi/addons/plugin.program.basiclauncher/games.json", 'wt') as f:
+    with open(os.path.expanduser("~/.kodi/addons/plugin.program.basiclauncher/games.json"), 'wt') as f:
         f.write(json.dumps(games, indent=4))
 
 
