@@ -1,13 +1,11 @@
 #!/bin/bash
-device='/dev/input/by-id/usb-4037_2.4G_Composite_Devic-event-if01'
-event_exit='*code 158 (KEY_BACK), value 0*'
+. ~/.kodi/addons/plugin.program.basiclauncher/config.cfg
 export DISPLAY=:0.0
 export PATH=/usr/games:/usr/local/bin:$PATH
 export SDL_AUDIODRIVER="alsa"
 
 ratpoison &
 RPID=$!
-
 EX=`basename $0`
 ARGS=""
 for var in "$@"
@@ -21,7 +19,6 @@ do
     fi
 done
 KPID=`pidof kodi.bin`
-kill -SIGSTOP $KPID
 EXE=`which $EX`
 echo "Executing $EXE $ARGS"
 /usr/bin/xdotool mousemove 1920 1080
@@ -29,13 +26,20 @@ eval $EXE $ARGS &
 /usr/bin/xdotool mousemove 1920 1080
 EPID=`pidof $EXE`
 
+echo "Pausing kodi"
+kill -SIGSTOP $KPID
+
+echo "Waiting to murder the process $EXE"
+
 /usr/bin/evtest "$device" | while read line; do
   case $line in
-    ($event_exit) break ;;
+    ($event_exit) killall -9 evtest; break ;;
   esac
+  echo "$line" >> /tmp/evtest
 done
 
 echo "Exiting $EXE"
 kill -9 $EPID
 kill -SIGCONT $KPID
 kill -9 $RPID
+
