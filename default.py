@@ -109,12 +109,13 @@ def build_menu(args):
         else:
             xbmc.log("Errorlog %s" % str(items), level=xbmc.LOGERROR)
             for key in items:
-                item = index[key]
+                item = index[str(key)]
                 menu_items.append(make_game_item(item))
 
     xbmcplugin.addDirectoryItems(addon_handle, menu_items, len(menu_items))
     xbmcplugin.setContent(addon_handle, 'movies')
-    xbmcplugin.endOfDirectory(addon_handle)
+    xbmcplugin.endOfDirectory(addon_handle, cacheToDisc=True)
+    xbmc.executebuiltin('Container.SetViewMode(%d)' % 65536)
 
 
 def play_game(game_id):
